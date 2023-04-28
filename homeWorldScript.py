@@ -1,10 +1,7 @@
 from airtest.core.api import *
-
 import threading
-import time
 
-
-# 请按照路线顺序安排
+# 请按照路线顺序安排 用来当作循环航路的路线设计 可以用作刷新信号
 travelingGalaxyPlanList = [
     "./resources/galaxyNameList/DEVADAASI.png", 
     "./resources/galaxyNameList/NIIREA PAAS.png", 
@@ -39,13 +36,9 @@ specialSignalMissionLoop =[
     "./resources/galaxyNameList/TEPECOAL.png"
 ]
 
-# 检查游戏是否启动并启动
-# app_checker = AppChecker("HomeWorld", "com.stratospheregames.nimbusgbx")
-# app_checker.launch_app()
-# stop_app("com.stratospheregames.nimbusgbx")
 
-# 并发的任务 用来检查
 class GameControllor:
+    # 并发的任务 用来检查
     def __init__(self):
         self.test = True
         self.galaxySignalMissionReady = True
@@ -55,6 +48,28 @@ class GameControllor:
         self.connectionCheckInterval = 60 * 5
         # 初始化掉线检查线程变量
         self.checkLostConnectThread = None
+    
+    def checkGameStarted(self):
+        # 检查游戏是否启动并启动
+        app_checker = AppChecker("HomeWorld", "com.stratospheregames.nimbusgbx")
+        app_checker.launch_app()
+        stop_app("com.stratospheregames.nimbusgbx")
+
+    def launch_app(self):
+        # 启动游戏
+        print(f"Launching {self.app_name}...")
+        start_app(self.package_name)
+        sleep(5)
+    
+    def close_app(self):
+        # 关闭游戏
+        if self.check_app():
+            print(f"Closing {self.app_name}...")
+            stop_app(self.package_name)
+            sleep(5)
+            if not self.check_app():
+                print(f"{self.app_name} is closed!")   
+
     def resetToMainScreen(self):
         # 点击Combat
         touch([1122, 93])
@@ -68,20 +83,23 @@ class GameControllor:
             # something wrong 
             log("某些奇怪的错误发生了,为什么没有回到主界面?")
             return False
-    # 进入System界面 当前的界面似乎不需要什么前置条件 但是在商店不行
+    
     def moveToSystemScreen(self):
+        # 进入System界面 当前的界面似乎不需要什么前置条件 但是在商店不行
         # into system
         touch([1251, 93])
         # 进入系统需要一定的缓冲刷新
         sleep(5.0)
         return True
-    # 打开信号列表
+    
     def openSignalList(self):
+        # 打开信号列表
         touch([1508,368])
         return True
-    # 开始扫描 应该配合进入System或者Galaxy使用!
-    # 请注意 一次调用只进行了一次的扫描
+
     def toScan(self):
+        # 开始扫描 应该配合进入System或者Galaxy使用!
+        # 请注意 一次调用只进行了一次的扫描
         log("准备开始扫描!")
         # Scan!
         touch([800, 715])
@@ -90,34 +108,24 @@ class GameControllor:
         # Focus!! 我的传感器需要大约8s的时间重复
         sleep(8.0)
         return True
+    
     def goToGalaxy(self):
         # open galaxy screen
         touch([1381, 91])
         sleep(5.0)
         return True
-    # make sure that you are in the main screen to do this
+
     def goToGalaxyAndOpenList(self):
+        # make sure that you are in the main screen to do this
         # open galaxy screen
         touch([1381, 91])
         sleep(5.0)
         # Click and open galaxy list
         touch([1513, 370])
         sleep(5.0)
-    # 启动游戏
-    def launch_app(self):
-        print(f"Launching {self.app_name}...")
-        start_app(self.package_name)
-        sleep(5)
-    # 关闭游戏
-    def close_app(self):
-        if self.check_app():
-            print(f"Closing {self.app_name}...")
-            stop_app(self.package_name)
-            sleep(5)
-            if not self.check_app():
-                print(f"{self.app_name} is closed!")   
-    # Main 按照一定的周期检查掉线 我们就两个都传递进来吧! 我设计的太垃圾了
+    
     def checkLostConnect(self,FleetCommander,MissionCommander):
+        # Main 按照一定的周期检查掉线 我们就两个都传递进来吧! 我设计的太垃圾了
         first_time = True
         while True:
             if not first_time:
@@ -168,6 +176,7 @@ class GameControllor:
                 MissionCommander.connectionReadyToWorkFlag = True
                 sleep(self.connectionCheckInterval)
             first_time = False
+
     def startGameandClearAdvertisement(self):
         # 准备开始检测是否存在目标
         welcomeFlagCheck = exists(Template(r"./resources/startGameFeature/welcomeFlag.png", record_pos=(-0.081, -0.221), resolution=(1600, 900)))
@@ -194,8 +203,9 @@ class GameControllor:
         checkEnterGameState = exists(Template(r"./resources/customFeature/playerPic.png", record_pos=(-0.446, -0.231), resolution=(1600, 900)))
         # 检查当前是否进入游戏界面
         return checkEnterGameState
-    # 开始执行checkLostConnect方法
+    
     def startCheckLostConnect(self, FleetCommander,MissionCommander):
+        # 开始执行checkLostConnect方法
         # 如果线程已经在运行，那么就不需要再启动了
         if self.checkLostConnectThread is not None and self.checkLostConnectThread.is_alive():
             return
@@ -205,8 +215,9 @@ class GameControllor:
         self.checkLostConnectThread.daemon = True
         # 启动线程
         self.checkLostConnectThread.start()
-    # 停止执行checkLostConnect方法
+    
     def stopCheckLostConnect(self):
+        # 停止执行checkLostConnect方法
         # 如果线程已经在运行，那么就停止它
         if self.checkLostConnectThread is not None and self.checkLostConnectThread.is_alive():
             self.checkLostConnectThread.stop()
@@ -215,24 +226,28 @@ class GameControllor:
         touch([1408, 677])
         sleep(1.0)
         touch([1408, 677])
-    # 开始条件 应该是主界面 不然点不了右上角的图标
+    
     def openSocial(self):
+        # 开始条件 应该是主界面 不然点不了右上角的图标
         # open channel list
         touch([1521, 72])
         sleep(1.0)
-    # 打开通信之后确定不是进入邮箱而是通信列表
+    
     def switchToChat(self):
+        # 打开通信之后确定不是进入邮箱而是通信列表
         # open chat list
         touch([1309, 106])
         log("确认切换到ChatList")
         sleep(1.0)
-    # 打开输入框 但是还没有输入内容
+    
     def openChatTextInputLine(self):
+        # 打开输入框 但是还没有输入内容
         # open text line
         touch([1053, 837])
         sleep(1.0)
-    # input输入框输入内容 请提前已经打开输入框了 也就是已经打开输入法界面了
+    
     def inputTextAndSend(self):
+        # input输入框输入内容 请提前已经打开输入框了 也就是已经打开输入法界面了
         # ready to create channel 准备开始在输入框输入内容
         # 清除输入框内容
         for i in range(10):
@@ -245,14 +260,16 @@ class GameControllor:
         # 点击游戏内的输入信息的绿色的回车
         touch([1496, 816])
         sleep(1.0)
-    # open group list
+    
     def openGroupList(self):
+        # open group list
         # click group
         touch([1514, 557])
         log("打开GroupList")
         sleep(1.0)
-    # create group 创建队伍
+    
     def createGroup(self):
+        # create group 创建队伍
         log("准备点击创建队伍按钮")
         # create group
         touch([1187, 456])
@@ -261,8 +278,9 @@ class GameControllor:
     def closeSocialList(self):
         touch([1514,54])
         log("关闭Social功能!")
-    # 用来加入频道并进入队伍 从主界面(可能)来最后回到主界面
+    
     def joinChannelAndGroup(self):
+        # 用来加入频道并进入队伍 从主界面(可能)来最后回到主界面
         log("准备开始创建Group")
         self.openSocial()
         self.switchToChat()
@@ -275,31 +293,31 @@ class GameControllor:
         self.closeSocialList()
         self.resetToMainScreen()
         
-
-    # 相当于也关闭GroupUI 
     def closeCommunicationLsitUI(self):
+        # 相当于也关闭GroupUI 
         # 关闭通信界面
         touch([1513, 57])
         sleep(1.0)
 
-    # 在选中一个Signal之后就开始检索Start按钮开始进入
     def findSignalStartButtonAndBeginMission(self):
+        # 在选中一个Signal之后就开始检索Start按钮开始进入
         startButton = exists(Template(r"./resources/commonCommand/SignalStartButton.png", record_pos=(0.253, 0.072), resolution=(1600, 900)))
         # start mission
         touch(startButton)
         log("导航员:准备进入战场!")
 
-    # 在战场上紧急跃迁
     def emergencyJump(self):
+        # 在战场上紧急跃迁
         # 直接点击目标位置退出
         touch([1195, 96])
         sleep(2.0)
         # 触发确认
         touch([1385, 91])
-        log("全舰紧急跃迁!")
-    # record two signal 假设已经完成了队伍创建 并且已经刷新出来了两个信号 现在等待记录两个信号 在主界面开始
-    # TODO 现在只能直接固定两个类型的任务 第一个是Progenitor 同类型的还有Tanoch 第二个是Relic
+
     def recordSignalMission(self):
+
+        # record two signal 假设已经完成了队伍创建 并且已经刷新出来了两个信号 现在等待记录两个信号 在主界面开始
+        # TODO 现在只能直接固定两个类型的任务 第一个是Progenitor 同类型的还有Tanoch 第二个是Relic
         log("准备开始信号记录到Group")
         self.resetToMainScreen()
         self.moveToSystemScreen()
@@ -317,6 +335,7 @@ class GameControllor:
             # 保证战场加载完毕的最小时间
             sleep(45.0)
             self.emergencyJump()
+            log("信号记录完毕,准备跃迁!")
             # 需要这一步骤 防止舰队人没有快速归队
             self.clickSkipButton()
             # 保证真的加载完毕的最小时间
@@ -350,13 +369,16 @@ class GameControllor:
             log("Relic信号检索失败,没有发现该信号")
             return False
         return True
-    # 打开物资列表 蓝色舰队图标
+
     def openResourceAndTargetListUI(self):
+        # 打开物资列表 蓝色舰队图标
         # 打开物资列表
         touch([1506, 545])
         sleep(1.0)
-    # 返回False或者成功执行
+
+
     def AbandonedFreightContainerLocate(self):
+        # 返回False或者成功执行
         # AbandonedFreightContainer 物资检查
         AbandonedFreightContainerLocation = exists(Template(r"./resources/signalResources/AbandonedFreightContainer.png", record_pos=(
             0.281, -0.096), resolution=(1600, 900)))
@@ -389,11 +411,8 @@ class GameControllor:
         #    return False
         touch([1235,301])
         sleep(1.0)
-
-
-
-    # !! 开启目标资源行动之后开始准备舰队移动
     def moveToTargetResources():
+        # !! 开启目标资源行动之后开始准备舰队移动
         # 绿色的Move操作
         #destinationCoordinates = exists(Template(r"./resources/commonCommand/fleetMoveTo.png", record_pos=(0.329, 0.038), resolution=(1600, 900)))
         #if destinationCoordinates:
@@ -402,8 +421,9 @@ class GameControllor:
             #sleep(40.0)
         touch([1232,492])
         sleep(1.0)
-    # collectorInterpack 矿机准备进行回收工作
+
     def collectorInterpack():
+         # collectorInterpack 矿机准备进行回收工作
         interpackCheck = exists(Template(
                 r"./resources/commonCommand/Interpact.png", record_pos=(0.229, 0.036), resolution=(1600, 900)))
         if interpackCheck:
@@ -413,8 +433,9 @@ class GameControllor:
                 return True
         else:
             return False
-    # 奖励结算 战斗结束后准备进行结算
+    
     def rewardSettlement(self):
+        # 奖励结算 战斗结束后准备进行结算
         communicationsOfficerCheck = exists(Template(
             r"./resources/signalResources/communicationsOfficer.png", record_pos=(-0.336, -0.149), resolution=(1600, 900)))
         if communicationsOfficerCheck:
@@ -424,19 +445,17 @@ class GameControllor:
             return True
         else:
             return False
+
     def signalFinishedDecision_stay():
         # 留在原地
         touch([597, 775])
-        return True
+
     def signalFinishedDecision_station():
         # 返回空间站
         touch([977, 778])
-        return True
 
-
-# 管理所有舰队的Galaxy行动
 class FleetCommander:
-    # 
+    # 管理所有舰队的Galaxy行动
     def __init__(self):
         # Template list
         self.stations = []
@@ -454,9 +473,8 @@ class FleetCommander:
         # 执行我们需要的目标方法
         targetMethod(*args)
     
-    # 当前的这个算法只能在起始站出发 不可以从中间的站点出发
+    # 只能在起始站出发 不可以从中间的站点出发
     # one_loop 参数，如果传递为 True，则在遍历完整个数组后，只会进行一次循环。
-    # 如果不传递 no_loop 参数，则默认为 False，仍然会循环遍历数组。
     # 返回Template
     def next_station(self, one_loop=False):
         if self.current_station_index == 0:
@@ -471,14 +489,11 @@ class FleetCommander:
             else:
                 # 否则，改变方向为向前移动
                 self.direction = -1
-        
         # 计算下一站的索引
         next_index = self.current_station_index + self.direction
-        
         # 如果到达了数组的末尾或开头，则根据参数值返回 False 或 True
         if next_index >= len(self.stations) or next_index < 0:
             return not one_loop
-        
         # 更新当前站点索引
         self.current_station_index = next_index
         
@@ -616,14 +631,14 @@ class FleetCommander:
         while True:
             # if 如果当前连接正常 那么继续工作 workingState is good 
             if self.workingState == True:
-                log("舰队信号通畅,准备开始扫描")
+                log("舰队指挥官:舰队信号通畅,准备开始扫描")
                 GameControllor.moveToSystemScreen()
                 GameControllor.toScan()
                 self.moveToNextStaion(GameControllor,pathNoLoopFlag)
-                log("准备进入下个星系! departureWithScan - if")
+                log("舰队指挥官:准备进入下个星系!")
             # else 如果检查到工作状态不正常 那么停止工作 workingState is bad 等待状态恢复
             elif self.workingState == False:
-                log("等待状态恢复")
+                log("舰队指挥官:等待连接状态恢复")
                 # 等待信号重新连接 阻塞舰队行动
                 while True:
                     # 主线程进行等待 直到 舰队被通知可以进行任务
@@ -635,10 +650,10 @@ class FleetCommander:
                 GameControllor.moveToSystemScreen()
                 GameControllor.toScan()
                 self.moveToNextStaion(GameControllor,pathNoLoopFlag)
-                log("准备进入下个星系! departure elif")
+                log("舰队指挥官:准备进入下个星系!")
 
-# 信号任务的战斗 突袭战斗 
 class CombatCommander:
+    # 信号任务的战斗 突袭战斗 
     def __init__(self):
         self.test = True
         # 自动释放技能间隔
@@ -693,50 +708,35 @@ class CombatCommander:
             # 关闭通信频道的无关UI 如果是Group进来的话
             GameControllor.closeCommunicationLsitUI()
 
-        # 回收箱子
-        # TODO 目标截图 是否真的箱子数量为0 
         # TODO 这个地方可能会遇到矿机被摧毁然后需要补充矿机的情况 放在UI操作内实现
         # 打开物资列表
         touch([1512,547])
-        # TODO 不确定是不是总是打开的第一个 具体描述:这个地方是已经检索到目标内容了准备前去
         # 打开一个物资的控制面板 
-        # TODO 这里采用模拟的情况 第一个物资的位置 
-        touch([1250,300])
-        # 舰队前去目标位置
-        touch([1328,514])
-        # 等待舰队就位
-        sleep(45.0)
-        # 打开一个物资的控制面板 你需要重新开启一次 因为移动命令一旦发出就会让操作台收回
-        # TODO 这里采用模拟的情况 第一个物资的位置 
         touch([1250,300])
         # 进行回收工作
         touch([1172,511])
         # 回收等待
-        sleep(10)
+        sleep(50.0)
 
         # 准备处理第二个物资
+
         # 打开物资列表
         touch([1512,547])
-        # 打开物资控制面板 
-        touch([1250,300])
-        # 舰队前去目标位置
-        touch([1328,514])
-        # 等待舰队就位
-        sleep(35.0)
-        # 打开物资控制面板 
+        # 打开一个物资的控制面板 
         touch([1250,300])
         # 进行回收工作
         touch([1172,511])
-        sleep(10)
+        # 回收等待
+        sleep(15.0)
 
         # 准备奖励结算和目的地
         if GameControllor.rewardSettlement():
             if destination == "station":
                 # 返回空间站
-                GameControllor.signalFinishedDecision_station()
+                GameControllor.signalFinishedDecision_station(None)
             elif destination == "stay":
                 # 留在原地
-                GameControllor.signalFinishedDecision_stay()
+                GameControllor.signalFinishedDecision_stay(None)
     # 处理Relic信号任务
     # 这类任务的特征是 1.前往目标地带 2.回收资源 该任务不需要消灭敌人
     def RlicSignal(self,GameControllor,signalJumpUICoordination,UISource:str,destination:str):
@@ -753,26 +753,26 @@ class CombatCommander:
         # 准备前往目标地点
         # TODO 这里假设有两个相同的物资 那么不断检查就好
         # 打开物资列表
-        GameControllor.openResourceAndTargetListUI()
-        # 检查搜索目标位置的未知位置并打开控制面板 解释:即带有问号的位置
-        GameControllor.TargetPositionLocate()
-        # 舰队前去目标位置 也是绿色的实心箭头
-        GameControllor.moveToTargetResources()
+        touch([1512,547])
+        # 打开物资控制面板 
+        touch([1250,300])
+        # 舰队前去目标位置 绿色的实心箭头
+        touch([1253,494])
         # 等待舰队就位
         sleep(45.0)
-        # 打开一个物资的控制面板 
+        # 打开物资控制面板 
         touch([1250,300])
         # 进行回收工作
-        touch([1172,511])
+        touch([1166,510])
 
         # 准备奖励结算和目的地
         if GameControllor.rewardSettlement():
             if destination == "station":
                 # 返回空间站
-                return GameControllor.signalFinishedDecision_station()
+                return GameControllor.signalFinishedDecision_station(None)
             else:
                 # 留在原地
-                return GameControllor.signalFinishedDecision_stay()
+                return GameControllor.signalFinishedDecision_stay(None)
     # 自动施法的初级形式
     def start(self):
         self.running = True
@@ -787,8 +787,8 @@ class ResourceManagementOfficer:
     def __init__(self):
         self.test = True
 
-# 任务管理官 负责处理办公室任务
 class MissionOperationsOfficer:
+    # 任务管理官 负责处理办公室任务
     def __init__(self):
         self.test = True
         # 重置队伍信号内容 当掉线发生时 循环暂停 并且重置
@@ -908,8 +908,8 @@ class MissionOperationsOfficer:
                         RelicSignalEnterCoordinate =[1147,723]
                         CombatCommander.ProgenitorSignal(GameControllor,RelicSignalEnterCoordinate,"Group","stay")
 
-# main Function
 def fleetAdvancesAccordingToTheLineAndClearSignal():
+    # main Function
     # 模块初始化准备
     # 舰队飞行控制模块准备
     fleetCommander = FleetCommander()
@@ -927,7 +927,6 @@ def fleetAdvancesAccordingToTheLineAndClearSignal():
     # 准备起航
     fleetCommander.departureWithAction(guider,combatCommander)
 
-
 def refreshSignalFromTartgetGalaxy():
     # 模块初始化准备
     fleetCommander = FleetCommander()
@@ -943,8 +942,8 @@ def refreshSignalFromTartgetGalaxy():
     # 准备起航
     fleetCommander.departureWithScan(guider,True)
 
-# 双信号行动
 def specialOperation():
+    # 双信号行动
     # 模块初始化准备
     fleetCommander = FleetCommander()
     # 游戏姿态矫正模块

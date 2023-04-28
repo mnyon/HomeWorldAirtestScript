@@ -9,8 +9,6 @@ from homeWorldScript import *
 auto_setup(__file__)
 
 # specialOperation()
-refreshSignalFromTartgetGalaxy()
-
-
+#refreshSignalFromTartgetGalaxy()
 
 
