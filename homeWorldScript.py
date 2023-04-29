@@ -309,7 +309,7 @@ class GameControllor:
         if startButtonExistCheck == False:
             return False
         log("导航员:准备进入战场!")
-        touch(startButton)
+        touch(startButtonExistCheck)
         return True
         
     def emergencyJump(self):
@@ -321,11 +321,10 @@ class GameControllor:
         touch([1385, 91])
 
     def recordSignalMission(self):
-
-        # record two signal 假设已经完成了队伍创建 并且已经刷新出来了两个信号 现在等待记录两个信号 在主界面开始
+        # 假设已经完成了队伍创建 并且已经刷新出来了两个信号 现在等待记录两个信号 
         # TODO 现在只能直接固定两个类型的任务 第一个是Progenitor 同类型的还有Tanoch 第二个是Relic
         log("准备开始信号记录到Group")
-        self.resetToMainScreen()
+        self.resetToMainScreen()  # 从主界面开始这个任务
         self.moveToSystemScreen()
         self.openSignalList()
         # locate Progenitor mission
@@ -338,19 +337,18 @@ class GameControllor:
             sleep(3.0)
             self.findSignalStartButtonAndBeginMission()
             self.clickSkipButton()
-            # 保证战场加载完毕的最小时间
-            sleep(45.0)
+            
+            sleep(45.0)             # 保证战场加载完毕的最小时间
             self.emergencyJump()
             log("信号记录完毕,准备跃迁!")
-            # 需要这一步骤 防止舰队人没有快速归队
-            self.clickSkipButton()
-            # 保证真的加载完毕的最小时间
-            sleep(40.0)
+            
+            self.clickSkipButton()  # 需要这一步骤 防止舰队人没有快速归队
+            
+            sleep(40.0)             # 保证真的加载完毕的最小时间
             log("Progenitor信号准备完毕!")
         else:
             log("Progenitor信号检索失败,没有发现该信号")
             return False
-        
         log("准备开始信号记录到Group")
         self.resetToMainScreen()
         self.moveToSystemScreen()
@@ -363,13 +361,10 @@ class GameControllor:
             sleep(3.0)
             self.findSignalStartButtonAndBeginMission()
             self.clickSkipButton()
-            # 保证战场加载完毕的最小时间
-            sleep(45.0)
+            sleep(45.0)             # 保证战场加载完毕的最小时间
             self.emergencyJump()
-            # 需要这一步骤 防止舰队人没有快速归队
-            self.clickSkipButton()
-            # 保证真的加载完毕的最小时间
-            sleep(40.0)
+            self.clickSkipButton()  # 需要这一步骤 防止舰队人没有快速归队
+            sleep(40.0)             # 保证真的加载完毕的最小时间
             log("Relic信号准备完毕!")
         else:
             log("Relic信号检索失败,没有发现该信号")
@@ -377,9 +372,7 @@ class GameControllor:
         return True
 
     def openResourceAndTargetListUI(self):
-        # 打开物资列表 蓝色舰队图标
-        # 打开物资列表
-        touch([1506, 545])
+        touch([1506, 545])  # 打开物资列表 蓝色舰队图标
         sleep(1.0)
 
 
@@ -551,20 +544,20 @@ class FleetCommander:
             if nextStationTemplate == False:
                 log("未能检索到下一站,出现异常错误")
                 return False
-            # Selecct next jump from list
-            nextStationCheck = exists(nextStationTemplate)
+            
+            nextStationCheck = exists(nextStationTemplate)  # Selecct next jump from list
             if nextStationCheck:
-                # 准备前往下一站
-                touch(nextStationCheck)
+                
+                touch(nextStationCheck)  # 准备前往下一站
                 sleep(5.0)
-                # 是否加载出来了跳跃界面
+                
                 jumpButtonCheck = exists(Template(r"./resources/commonCommand/jumpButton.png", record_pos=(
-                    0.309, 0.072), resolution=(1600, 900)))
+                    0.309, 0.072), resolution=(1600, 900))) # 是否加载出来了跳跃界面
                 if jumpButtonCheck:
                     touch(jumpButtonCheck)
                     GameControllor.clickSkipButton()
-                    # 等待加载时间 注释:此处的加载指进行的跨越星系之间的加载时间 应该尽可能宽裕一些
-                    sleep(40.0)
+                    
+                    sleep(40.0) # 等待加载时间 注释:此处的加载指进行的跨越星系之间的加载时间 应该尽可能宽裕一些
                     return True
                     # Focus 为了提高效率不进行下面的处理了
                     # 根据头像是否存在来检查是否回到了主界面
@@ -701,7 +694,7 @@ class CombatCommander:
         return True
 
     def ProgenitorSignal(self,GameControllor,signalJumpUICoordination,UISource:str,destination:str):
-        # 实际上这就是一种类型的战斗
+        # 这是一种类型的战斗
         # ! 请注意 每个新增的Signal战斗策略都必须和SignalMissionTypeList中的类型Type保持一致
         # 传递进来一个任务的Jump参数 从这里开始进行操作 所以如果根本没有Jump的时候也不会随便的触发这个部分 
         # UISource 既可以是Group进入信号也可以是普通的SignalList进入
@@ -711,36 +704,19 @@ class CombatCommander:
         touch(signalJumpUICoordination)
         GameControllor.clickSkipButton()
         log("战斗指挥官:准备进入战场")
-        # 准备加载到战场
-        sleep(35.0)
-        # UI处理
-        if UISource == "Group":
-            # 关闭通信频道的无关UI 如果是Group进来的话
-            GameControllor.closeCommunicationLsitUI()
+        sleep(35.0) # 准备加载到战场
+        if UISource == "Group":         # UI处理
+            GameControllor.closeCommunicationLsitUI()   # 关闭通信频道的无关UI 如果是Group进来的话
 
-        # TODO 这个地方可能会遇到矿机被摧毁然后需要补充矿机的情况 放在UI操作内实现
-        # 打开物资列表
-        touch([1512,547])
-        # 打开一个物资的控制面板 
-        touch([1250,300])
-        # 进行回收工作
-        touch([1172,511])
-        # 回收等待
-        sleep(50.0)
+        touch([1512,547])   # 打开物资列表
+        touch([1250,300])   # 打开一个物资的控制面板 
+        touch([1172,511])   # 进行回收工作
+        sleep(60.0)         # 回收等待
+        touch([1250,300])   # 打开第二个物资物资列表
+        touch([1172,511])   # 进行回收工作
+        sleep(60.0)         # 回收等待
 
-        # 准备处理第二个物资
-
-        # 打开物资列表
-        touch([1512,547])
-        # 打开一个物资的控制面板 
-        touch([1250,300])
-        # 进行回收工作
-        touch([1172,511])
-        # 回收等待
-        sleep(15.0)
-        log("战斗指挥官:战斗基本完成")
-        # 准备奖励结算和目的地
-        if GameControllor.rewardSettlement():
+        if GameControllor.rewardSettlement():   # 准备奖励结算和目的地
             if destination == "station":
                 # 返回空间站
                 touch([977, 778])
@@ -748,35 +724,32 @@ class CombatCommander:
                 # 留在原地
                 touch([597, 775])
 
-    def RlicSignal(self,GameControllor,signalJumpUICoordination,UISource:str,destination:str):
+    def RlicSignal(self,gameControllor,signalJumpUICoordination,UISource:str,destination:str):
         # 处理Relic信号任务
         # 这类任务的特征是 1.前往目标地带 2.回收资源 该任务不需要消灭敌人
         # 进行跃迁,开始战场加载
+
         touch(signalJumpUICoordination)
         # 跳过加载动画
-        GameControllor.clickSkipButton()
+        gameControllor.clickSkipButton()
         # 等待完全加载
         sleep(35.0)
         # 如果是Group进入战场则进行UI处理
         if UISource == "Group":
             # 关闭通信频道的无关UI 如果是Group进来的话
-            GameControllor.closeCommunicationLsitUI()
+            gameControllor.closeCommunicationLsitUI()
         # 准备前往目标地点
         # TODO 这里假设有两个相同的物资 那么不断检查就好
-        # 打开物资列表
-        touch([1512,547])
-        # 打开物资控制面板 
-        touch([1250,300])
-        # 舰队前去目标位置 绿色的实心箭头
-        touch([1253,494])
-        # 等待舰队就位
-        sleep(45.0)
-        # 打开物资控制面板 
-        touch([1250,300])
-        # 进行回收工作
-        touch([1166,510])
-        # 准备奖励结算和目的地
-        if GameControllor.rewardSettlement():
+        
+        touch([1512,547])   # 打开物资列表
+        touch([1250,300])   # 打开物资控制面板 
+        touch([1253,494])   # 舰队前去目标位置 绿色的实心箭头
+        sleep(25.0)         # 等待舰队就位 实际上只要发现目标即可 
+        touch([1250,300])   # 打开物资控制面板
+        touch([1166,510])   # 进行回收工作
+        sleep(65.0)         # 等待回收完成 这个过程相当的漫长
+
+        if gameControllor.rewardSettlement():   # 准备奖励结算和目的地
             if destination == "station":
                 # 返回空间站
                 touch([977, 778])
@@ -907,6 +880,32 @@ class MissionOperationsOfficer:
                         # 进入第二个信号 留在原地
                         RelicSignalEnterCoordinate =[1147,723]
                         CombatCommander.ProgenitorSignal(GameControllor,RelicSignalEnterCoordinate,"Group","stay")
+def relicBattleTest():
+    # 测试Code 
+    gameControllor = GameControllor()
+    touch([1512,547])   # 打开物资列表
+    touch([1250,300])   # 打开物资控制面板 
+    touch([1253,494])   # 舰队前去目标位置 绿色的实心箭头
+    sleep(25.0)         # 等待舰队就位 实际上只要发现目标即可 
+    touch([1250,300])   # 打开物资控制面板
+    touch([1166,510])   # 进行回收工作
+    sleep(65.0)         # 等待回收完成 这个过程相当的漫长
+    if gameControllor.rewardSettlement():   # 准备奖励结算和目的地
+        touch([597, 775])
+
+def twoWaveAndResourcesCollectBattelTest():
+    gameControllor = GameControllor()
+
+    touch([1512,547])   # 打开物资列表
+    touch([1250,300])   # 打开一个物资的控制面板 
+    touch([1172,511])   # 进行回收工作
+    sleep(60.0)         # 回收等待
+    touch([1250,300])   # 打开第二个物资物资列表
+    touch([1172,511])   # 进行回收工作
+    sleep(60.0)         # 回收等待
+
+    if gameControllor.rewardSettlement():   # 准备奖励结算和目的地
+        touch([597, 775])
 
 def fleetAdvancesAccordingToTheLineAndClearSignal():
     # main Function
@@ -940,7 +939,7 @@ def refreshSignalFromTartgetGalaxy():
     # 舰队任务信息初始化
         # specialSignalMissionLoop
         # travelingGalaxyPlanList
-    fleetCommander.initGalaxyTemplateResources(specialSignalMissionLoop)
+    fleetCommander.initGalaxyTemplateResources(travelingGalaxyPlanList)
     # 准备起航
     fleetCommander.departureWithScan(guider,True)
 
