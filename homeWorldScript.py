@@ -5,12 +5,15 @@ import threading
 travelingGalaxyPlanList = [
     "./resources/galaxyNameList/DEVADAASI.png", 
     "./resources/galaxyNameList/NIIREA PAAS.png", 
+    "./resources/galaxyNameList/KALUARI.png",
     "./resources/galaxyNameList/KEID.png", 
     "./resources/galaxyNameList/VISAAN KI.png", 
     "./resources/galaxyNameList/JONALLI.png",
     "./resources/galaxyNameList/LIUSATA.png",
     "./resources/galaxyNameList/KISHO RE.png",
-    "./resources/galaxyNameList/SOBEL REM.png"
+    "./resources/galaxyNameList/SOBEL REM.png",
+    "./resources/galaxyNameList/BESCAVA.png",
+    "./resources/galaxyNameList/LARCAVA.png"
     ]
 
 # 需要进行信号任务的类型
@@ -143,7 +146,8 @@ class GameControllor:
                     # 继续周期性检查掉线情况 
                     sleep(self.connectionCheckInterval)
                 # 准备重新连接
-                if warningFlagCheck or restartGameCheck:
+                # if warningFlagCheck or restartGameCheck:
+                if warningFlagCheck:
                     log("舰队领航员:检查到掉线情况发生,准备重新连接")
                     # 侦测到连接中断,通知舰队停止行动
                     FleetCommander.workingState = False
@@ -299,13 +303,15 @@ class GameControllor:
         touch([1513, 57])
         sleep(1.0)
 
-    def findSignalStartButtonAndBeginMission(self):
-        # 在选中一个Signal之后就开始检索Start按钮开始进入
-        startButton = exists(Template(r"./resources/commonCommand/SignalStartButton.png", record_pos=(0.253, 0.072), resolution=(1600, 900)))
-        # start mission
-        touch(startButton)
+    def findSignalStartButtonAndBeginMission(self) -> bool:
+        # 选中一个Signal之后检索Start按钮进入
+        startButtonExistCheck = exists(Template(r"./resources/commonCommand/SignalStartButton.png", record_pos=(0.253, 0.072), resolution=(1600, 900)))
+        if startButtonExistCheck == False:
+            return False
         log("导航员:准备进入战场!")
-
+        touch(startButton)
+        return True
+        
     def emergencyJump(self):
         # 在战场上紧急跃迁
         # 直接点击目标位置退出
@@ -466,17 +472,23 @@ class FleetCommander:
         # 当前是否可以执行任务
         self.workingState = False
 
-    # 这里定义了一个工具类函数它的意义是为了通过一个字符串来调用一个方法
-    # 该方法返回一个函数的指向 仍然需要手动调用
     def callMethodByName(methodName, targetClass,*args):
+        # 这里定义了一个工具类函数它的意义是为了通过一个字符串来调用一个方法
+        # 该方法返回一个函数的指向 仍然需要手动调用
         targetMethod = getattr(targetClass, methodName)
         # 执行我们需要的目标方法
         targetMethod(*args)
     
-    # 只能在起始站出发 不可以从中间的站点出发
-    # one_loop 参数，如果传递为 True，则在遍历完整个数组后，只会进行一次循环。
-    # 返回Template
+    def initGalaxyTemplateResources(self,imagePathList):
+        # 初始化一个路线
+        for elem in imagePathList:
+            # 此处的record_pos已经优化为GalaxyList的UI框内,提高了很多准确程度
+            self.stations.append(Template(elem,record_pos=(0.284, 0.014),resolution=(1600, 900)))
+        # default 分辨率
     def next_station(self, one_loop=False):
+        # 只能在起始站出发 不可以从中间的站点出发
+        # one_loop 参数，如果传递为 True，则在遍历完整个数组后，只会进行一次循环。
+        # 返回Template
         if self.current_station_index == 0:
             # 如果当前站点是第一个站点，设置方向为向后移动
             self.direction = 1
@@ -499,16 +511,9 @@ class FleetCommander:
         
         # 返回下一站的定位资源
         return self.stations[self.current_station_index]
-
-
-    def get_current_station(self):
-        return self.current_station_index
-    def initGalaxyTemplateResources(self,imagePathList):
-        for elem in imagePathList:
-            self.stations.append(Template(elem,record_pos=(0.241, -0.011),resolution=(1600, 900)))
-        # default 分辨率
-    # 清理本星系的信号任务 是完全的打完还是仅仅是有限的次数?
+    
     def cleanLocalSignals(self,GameControllor,CombatCommander):
+        # 清理本星系的信号任务 是完全的打完还是仅仅是有限的次数?
         # 进行有限次数的任务 进行2遍 一般一个类型的任务也就出现两遍
         for index in range(2):
             # 进入System界面
@@ -534,8 +539,9 @@ class FleetCommander:
                 else:
                     log("没有找到当前信号类型!")
         return True
-    # 这个操作包含一定的UI控制的需要 请在MainScreen开始
+    
     def moveToNextStaion(self,GameControllor,pathNoLoopFlag = False):
+        # 这个操作包含一定的UI控制的需要 请在MainScreen开始
         # 重置为游戏主界面
         if GameControllor.resetToMainScreen():
             GameControllor.goToGalaxyAndOpenList()
@@ -571,10 +577,11 @@ class FleetCommander:
             else:
                 log("Something wrong to locate NextGlaxy")
                 return False
-    # 需要考虑到底执行几次 怎么才能干净的清除 次数 和 返回可能的失误检查
-    # 返回正数则是成功到达下个星系
-    # 返回负数则是未能成功到达下个星系
+
     def action(self,GameControllor,CombatCommander):
+        # 需要考虑到底执行几次 怎么才能干净的清除 次数 和 返回可能的失误检查
+        # 返回正数则是成功到达下个星系
+        # 返回负数则是未能成功到达下个星系
         # Try 在当前站点执行任务
         try:
             # 初始化 CombatCommander 将所有的Tpye转化为Template 
@@ -599,8 +606,9 @@ class FleetCommander:
                     # 本星系积累了过多的错误,应该留下日志等待具体检查 log
                     # 前往下一站
                     return self.moveToNextStaion(GameControllor)
-    # main function No returning value 这个似乎不需要做成线程
+    
     def departureWithAction(self,GameControllor,CombatCommander):
+        # main function No returning value 这个似乎不需要做成线程
         # 无限循环走向下一站
         while True:
             # if 如果当前连接正常 那么继续工作 workingState is good 
@@ -624,27 +632,26 @@ class FleetCommander:
                     log("舰队正常执行任务.该Log出自departure elif")
                 self.moveToNextStaion(GameControllor)
 
-    # 从用户指定的星系开始刷新信号 最终会回到原来的地方
-    # 请提前配置刷新线路
     def departureWithScan(self,GameControllor,pathNoLoopFlag = False):
+        # 从指定星系开始逐个System扫描 最终会回到原来的地方 请提前配置刷新线路
         # 无限循环走向下一站
         while True:
-            # if 如果当前连接正常 那么继续工作 workingState is good 
+            # 如果连接正常那么继续工作
             if self.workingState == True:
                 log("舰队指挥官:舰队信号通畅,准备开始扫描")
                 GameControllor.moveToSystemScreen()
                 GameControllor.toScan()
                 self.moveToNextStaion(GameControllor,pathNoLoopFlag)
                 log("舰队指挥官:准备进入下个星系!")
-            # else 如果检查到工作状态不正常 那么停止工作 workingState is bad 等待状态恢复
+            # 如果检查到工作状态不正常那么停止工作
             elif self.workingState == False:
                 log("舰队指挥官:等待连接状态恢复")
                 # 等待信号重新连接 阻塞舰队行动
                 while True:
-                    # 主线程进行等待 直到 舰队被通知可以进行任务
+                    # 主线程进行等待直到舰队被通知可以进行任务
                     sleep(60)
                     if self.workingState:
-                        # 结束阻塞的循环 准备继续触发
+                        # 结束阻塞的循环 准备出发
                         break
                 # 阻塞结束 准备继续工作
                 GameControllor.moveToSystemScreen()
@@ -664,8 +671,9 @@ class CombatCommander:
         self.signalTypeDataList = []
         # 记录当前需要进行任务的信号类型下标 初始化为0
         self.signalTypeIndex = 0
-    # 初始化signalTypeTemplateList 方便UI的使用
+
     def initGalaxyTemplateResources(self,imagePathList):
+        # 初始化signalTypeTemplateList 方便UI的使用
         self.signalTypeList = imagePathList
         # 第一个成员是Path路径 第二个是信号类型 这些信号类型会和对应的方法结合在一起
         for elem in imagePathList:
@@ -674,8 +682,9 @@ class CombatCommander:
                 templateObject:Template(elem.path,record_pos=(0.261, -0.095), resolution=(1600, 900)),
                 signalType:elem.signalType
                 })
-    # 获取当前需要进行任务的信号类型并你准备下一个任务类型 返回Template
+    
     def get_SignalMissionTypeAndReadyForNext(self):
+        # 获取当前需要进行任务的信号类型并你准备下一个任务类型 返回Template
         if self.signalTypeIndex < len(self.signalTypeDataList):
             element = self.signalTypeDataList[self.signalTypeIndex]
             self.signalTypeIndex += 1
@@ -691,16 +700,17 @@ class CombatCommander:
     def protectTarget(self):
         return True
 
-    # 实际上这就是一种类型的战斗
-    # ! 请注意 每个新增的Signal战斗策略都必须和SignalMissionTypeList中的类型Type保持一致
-    # 传递进来一个任务的Jump参数 从这里开始进行操作 所以如果根本没有Jump的时候也不会随便的触发这个部分 
-    # UISource 既可以是Group进入信号也可以是普通的SignalList进入
-    # destination 最终返回的地方 例如空间站还是留在原地
     def ProgenitorSignal(self,GameControllor,signalJumpUICoordination,UISource:str,destination:str):
+        # 实际上这就是一种类型的战斗
+        # ! 请注意 每个新增的Signal战斗策略都必须和SignalMissionTypeList中的类型Type保持一致
+        # 传递进来一个任务的Jump参数 从这里开始进行操作 所以如果根本没有Jump的时候也不会随便的触发这个部分 
+        # UISource 既可以是Group进入信号也可以是普通的SignalList进入
+        # destination 最终返回的地方 例如空间站还是留在原地
         # 这是一个UI模拟战斗功能函数
         # 先祖任务的描述 这类任务往往是击退两次敌人和回收资源
         touch(signalJumpUICoordination)
         GameControllor.clickSkipButton()
+        log("战斗指挥官:准备进入战场")
         # 准备加载到战场
         sleep(35.0)
         # UI处理
@@ -728,18 +738,19 @@ class CombatCommander:
         touch([1172,511])
         # 回收等待
         sleep(15.0)
-
+        log("战斗指挥官:战斗基本完成")
         # 准备奖励结算和目的地
         if GameControllor.rewardSettlement():
             if destination == "station":
                 # 返回空间站
-                GameControllor.signalFinishedDecision_station(None)
+                touch([977, 778])
             elif destination == "stay":
                 # 留在原地
-                GameControllor.signalFinishedDecision_stay(None)
-    # 处理Relic信号任务
-    # 这类任务的特征是 1.前往目标地带 2.回收资源 该任务不需要消灭敌人
+                touch([597, 775])
+
     def RlicSignal(self,GameControllor,signalJumpUICoordination,UISource:str,destination:str):
+        # 处理Relic信号任务
+        # 这类任务的特征是 1.前往目标地带 2.回收资源 该任务不需要消灭敌人
         # 进行跃迁,开始战场加载
         touch(signalJumpUICoordination)
         # 跳过加载动画
@@ -764,17 +775,17 @@ class CombatCommander:
         touch([1250,300])
         # 进行回收工作
         touch([1166,510])
-
         # 准备奖励结算和目的地
         if GameControllor.rewardSettlement():
             if destination == "station":
                 # 返回空间站
-                return GameControllor.signalFinishedDecision_station(None)
-            else:
+                touch([977, 778])
+            elif destination == "stay":
                 # 留在原地
-                return GameControllor.signalFinishedDecision_stay(None)
-    # 自动施法的初级形式
+                touch([597, 775])
+    
     def start(self):
+        # 自动施法的初级形式
         self.running = True
         while self.running:
             # touch(self.pos)
@@ -793,9 +804,10 @@ class MissionOperationsOfficer:
         self.test = True
         # 重置队伍信号内容 当掉线发生时 循环暂停 并且重置
         self.connectionReadyToWorkFlag = False
-    # 这两种时最常见的信号 不要自己提前开组队 会影响脚本
-    # 测试Progenitor and Relic信号循环 这是个特别的任务仅仅需要用户直接跃迁到目标位置即可 无需多余操作
+
     def SpecificSignalMissionLoop_Test(self,GameControllor,FleetCommander,CombatCommander,isSignalAlreadyPrepare = False):
+        # 这两种时最常见的信号 不要自己提前开组队 会影响脚本
+        # 测试Progenitor and Relic信号循环 这是个特别的任务仅仅需要用户直接跃迁到目标位置即可 无需多余操作
         # 循环
         while True:
             # 这是个隐式的被GameControllor控制的变量
@@ -944,12 +956,13 @@ def refreshSignalFromTartgetGalaxy():
 
 def specialOperation():
     # 双信号行动
-    # 模块初始化准备
+    # 舰队飞行控制模块准备
     fleetCommander = FleetCommander()
     # 游戏姿态矫正模块
     guider = GameControllor()
     # 战斗模块准备
     combatCommander = CombatCommander()
+    # 任务官准备执行任务
     missionOperationsOfficer = MissionOperationsOfficer()
     # 连接丢失重连检查
     guider.startCheckLostConnect(fleetCommander,missionOperationsOfficer)
