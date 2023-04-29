@@ -808,33 +808,27 @@ class MissionOperationsOfficer:
     def SpecificSignalMissionLoop_Test(self,GameControllor,FleetCommander,CombatCommander,isSignalAlreadyPrepare = False):
         # 这两种时最常见的信号 不要自己提前开组队 会影响脚本
         # 测试Progenitor and Relic信号循环 这是个特别的任务仅仅需要用户直接跃迁到目标位置即可 无需多余操作
-        # 循环
+        
+        GameControllor.joinChannelAndGroup()    # 准备创建频道并进入小队
         while True:
-            # 这是个隐式的被GameControllor控制的变量
-            if self.connectionReadyToWorkFlag:
+            if self.connectionReadyToWorkFlag:  # 隐式被GameControllor控制的变量
                 log("舰队指挥官:连接状态正常 准备进行信号作业")
-                # 用户准备好了信号状态不必重新进行刷新信号了
-                if isSignalAlreadyPrepare:
+                if isSignalAlreadyPrepare:      # 用户准备好了信号状态不必重新进行刷新信号了
                     log("舰队指挥官:准备扫描信号")
                     GameControllor.moveToSystemScreen()
-                    # 进行充足的扫描来防止没有刷新
+                    GameControllor.toScan()     # 进行充足的扫描来防止没有刷新
                     GameControllor.toScan()
                     GameControllor.toScan()
                     GameControllor.toScan()
-                    # 准备创建频道并进入小队
-                    GameControllor.joinChannelAndGroup()
-                    # !! 记录信号 这个方法只能按照Progenitor和Relic的顺序记录 
+                    GameControllor.toScan()      
                     GameControllor.recordSignalMission()
-                    # 循环刷两个信号 此处开始可以模拟操作 while True
-                    while True:
-                        # 利用if判定是否存在connectionReadyToWorkFlag如果条件不好就break
-                        if self.connectionReadyToWorkFlag:
-                            # 进入group
-                            GameControllor.openSocial()
+                    isSignalAlreadyPrepare = False      # 用户准备好了信号状态不必重新进行刷新信号了   
+                    while True:                         # 循环刷两个信号 此处开始可以模拟操作 while True
+                        if self.connectionReadyToWorkFlag:  # 如果条件不好就break
+                            GameControllor.openSocial()     # 进入group
                             GameControllor.switchToChat()
                             GameControllor.openGroupList()
-                            # 进入第一个信号 留在原地
-                            ProgenitorSignalEnterCoordinate = [1201,635]
+                            ProgenitorSignalEnterCoordinate = [1201,635] # 进入第一个信号 留在原地
                             CombatCommander.ProgenitorSignal(GameControllor,ProgenitorSignalEnterCoordinate,"Group","stay")
                             # 进入group
                             GameControllor.openSocial()
@@ -843,19 +837,15 @@ class MissionOperationsOfficer:
                             # 进入第二个信号 留在原地
                             RelicSignalEnterCoordinate =[1147,723]
                             CombatCommander.ProgenitorSignal(GameControllor,RelicSignalEnterCoordinate,"Group","stay")
-                # 指挥官没有准备好信号刷新机制需要自动刷新
-                else:
-                    # FleetCommander 刷新信号任务 从线路出发然后回来
-                    # 一旦掉线会通知FleetCommander停下来 然后一会继续
-                    FleetCommander.departureWithScan(GameControllor,True)
-                    log("舰队指挥官:准备扫描信号")
+                else:   # 指挥官没有准备好信号刷新机制需要自动刷新
+                    FleetCommander.departureWithScan(GameControllor,True) # 刷新信号任务 从线路出发然后回来
+                    log("舰队指挥官:准备扫描信号")                          # 支持继续断线继续
                     GameControllor.moveToSystemScreen()
-                    # 进行充足的扫描来防止没有刷新
+                    GameControllor.toScan()                               # 进行充足的扫描来防止没有刷新
                     GameControllor.toScan()
                     GameControllor.toScan()
                     GameControllor.toScan()
-                    # 准备创建频道并进入小队
-                    GameControllor.joinChannelAndGroup()
+                    GameControllor.toScan()
                     # !! 记录信号 这个方法只能按照Progenitor和Relic的顺序记录 
                     GameControllor.recordSignalMission()
                     # 循环刷两个信号 此处开始可以模拟操作 while True
@@ -886,8 +876,6 @@ class MissionOperationsOfficer:
                         # 结束阻塞的循环 准备继续触发
                         break
                 # 阻塞结束 准备继续工作
-                # 需要重新刷新任务
-
                 # FleetCommander 刷新信号任务 从线路出发然后回来
                 # 一旦掉线会通知FleetCommander停下来 然后一会继续
                 FleetCommander.departureWithScan(GameControllor,True)
@@ -897,8 +885,8 @@ class MissionOperationsOfficer:
                 GameControllor.toScan()
                 GameControllor.toScan()
                 GameControllor.toScan()
-                # 准备创建频道并进入小队
-                GameControllor.joinChannelAndGroup()
+                GameControllor.toScan()
+                GameControllor.toScan()
                 # !! 记录信号 这个方法只能按照Progenitor和Relic的顺序记录 
                 GameControllor.recordSignalMission()
                 # 循环刷两个信号 此处开始可以模拟操作 while True
@@ -950,7 +938,9 @@ def refreshSignalFromTartgetGalaxy():
     # 连接丢失重连检查
     guider.startCheckLostConnect(fleetCommander,missionOperationsOfficer)
     # 舰队任务信息初始化
-    fleetCommander.initGalaxyTemplateResources(travelingGalaxyPlanList)
+        # specialSignalMissionLoop
+        # travelingGalaxyPlanList
+    fleetCommander.initGalaxyTemplateResources(specialSignalMissionLoop)
     # 准备起航
     fleetCommander.departureWithScan(guider,True)
 
