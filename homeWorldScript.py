@@ -434,13 +434,14 @@ class GameControllor:
             return False
     
     def rewardSettlement(self):
-        # 奖励结算 战斗结束后准备进行结算
         communicationsOfficerCheck = exists(Template(
             r"./resources/signalResources/communicationsOfficer.png", record_pos=(-0.336, -0.149), resolution=(1600, 900)))
         if communicationsOfficerCheck:
+            touch([821, 340])       # 和通信官对话,触发奖励结算
             touch([821, 340])
-            # 等待奖励结算
-            sleep(13.0)
+            touch([821, 340])
+            touch([821, 340])
+            sleep(13.0)             # 等待奖励结算
             return True
         else:
             return False
@@ -694,7 +695,6 @@ class CombatCommander:
         return True
 
     def ProgenitorSignal(self,GameControllor,signalJumpUICoordination,UISource:str,destination:str):
-        # 这是一种类型的战斗
         # ! 请注意 每个新增的Signal战斗策略都必须和SignalMissionTypeList中的类型Type保持一致
         # 传递进来一个任务的Jump参数 从这里开始进行操作 所以如果根本没有Jump的时候也不会随便的触发这个部分 
         # UISource 既可以是Group进入信号也可以是普通的SignalList进入
@@ -702,19 +702,28 @@ class CombatCommander:
         # 这是一个UI模拟战斗功能函数
         # 先祖任务的描述 这类任务往往是击退两次敌人和回收资源
         touch(signalJumpUICoordination)
+        log("点击Skip")
         GameControllor.clickSkipButton()
-        log("战斗指挥官:准备进入战场")
-        sleep(35.0) # 准备加载到战场
+        log("战斗指挥官:准备进入战场 开始Progenitor任务")
+        sleep(30.0) # 准备加载到战场
         if UISource == "Group":         # UI处理
+            log("关闭无关UI")
             GameControllor.closeCommunicationLsitUI()   # 关闭通信频道的无关UI 如果是Group进来的话
 
         touch([1512,547])   # 打开物资列表
-        touch([1250,300])   # 打开一个物资的控制面板 
-        touch([1172,511])   # 进行回收工作
-        sleep(60.0)         # 回收等待
-        touch([1250,300])   # 打开第二个物资物资列表
-        touch([1172,511])   # 进行回收工作
-        sleep(60.0)         # 回收等待
+        touch([1250,300])   # 打开第一个物资的控制面板 
+        touch([1336,511])   # 舰队协同保护矿机 前进Move
+        sleep(30.0)         # 前进等待
+        touch([1250,300])   # 打开第一个物资的控制面板
+        touch([1169,508])   # 开始回收工作
+        sleep(13.0)         # 正在进行回收
+
+        touch([1250,300])   # 打开第二个物资的控制面板
+        touch([1336,511])   # 舰队协同保护矿机 前进Move
+        sleep(60.0)         # 前进等待
+        touch([1169,508])   # 开始回收工作
+        sleep(13.0)         # 正在进行回收
+        sleep(12.0)         # 等待敌人被歼灭
 
         if GameControllor.rewardSettlement():   # 准备奖励结算和目的地
             if destination == "station":
@@ -727,19 +736,14 @@ class CombatCommander:
     def RlicSignal(self,gameControllor,signalJumpUICoordination,UISource:str,destination:str):
         # 处理Relic信号任务
         # 这类任务的特征是 1.前往目标地带 2.回收资源 该任务不需要消灭敌人
-        # 进行跃迁,开始战场加载
-
-        touch(signalJumpUICoordination)
-        # 跳过加载动画
-        gameControllor.clickSkipButton()
-        # 等待完全加载
-        sleep(35.0)
+        
+        touch(signalJumpUICoordination)     # 进行跃迁,开始战场加载
+        gameControllor.clickSkipButton()    # 跳过加载动画
+        sleep(30.0)                         # 等待完全加载
         # 如果是Group进入战场则进行UI处理
         if UISource == "Group":
-            # 关闭通信频道的无关UI 如果是Group进来的话
-            gameControllor.closeCommunicationLsitUI()
-        # 准备前往目标地点
-        # TODO 这里假设有两个相同的物资 那么不断检查就好
+            log("关闭无关UI")
+            gameControllor.closeCommunicationLsitUI()   # 关闭通信频道的无关UI 如果是Group进来的话
         
         touch([1512,547])   # 打开物资列表
         touch([1250,300])   # 打开物资控制面板 
@@ -747,7 +751,8 @@ class CombatCommander:
         sleep(25.0)         # 等待舰队就位 实际上只要发现目标即可 
         touch([1250,300])   # 打开物资控制面板
         touch([1166,510])   # 进行回收工作
-        sleep(65.0)         # 等待回收完成 这个过程相当的漫长
+        sleep(62.0)         # 等待回收完成 这个过程相当的漫长
+        log("回收预计完成")
 
         if gameControllor.rewardSettlement():   # 准备奖励结算和目的地
             if destination == "station":
@@ -799,14 +804,14 @@ class MissionOperationsOfficer:
                     while True:                         # 循环刷两个信号 此处开始可以模拟操作 while True
                         if self.connectionReadyToWorkFlag:  # 如果条件不好就break
                             GameControllor.openSocial()     # 进入group
-                            GameControllor.switchToChat()
-                            GameControllor.openGroupList()
+                            #GameControllor.switchToChat()
+                            #GameControllor.openGroupList()
                             ProgenitorSignalEnterCoordinate = [1201,635] # 进入第一个信号 留在原地
                             CombatCommander.ProgenitorSignal(GameControllor,ProgenitorSignalEnterCoordinate,"Group","stay")
                             # 进入group
                             GameControllor.openSocial()
-                            GameControllor.switchToChat()
-                            GameControllor.openGroupList()
+                            #GameControllor.switchToChat()
+                            #GameControllor.openGroupList()
                             # 进入第二个信号 留在原地
                             RelicSignalEnterCoordinate =[1147,723]
                             CombatCommander.ProgenitorSignal(GameControllor,RelicSignalEnterCoordinate,"Group","stay")
@@ -827,15 +832,15 @@ class MissionOperationsOfficer:
                         if self.connectionReadyToWorkFlag:
                             # 进入group
                             GameControllor.openSocial()
-                            GameControllor.switchToChat()
-                            GameControllor.openGroupList()
+                            #GameControllor.switchToChat()
+                            #GameControllor.openGroupList()
                             # 进入第一个信号 留在原地
                             ProgenitorSignalEnterCoordinate = [1201,635]
                             CombatCommander.ProgenitorSignal(GameControllor,ProgenitorSignalEnterCoordinate,"Group","stay")
                             # 进入group
                             GameControllor.openSocial()
-                            GameControllor.switchToChat()
-                            GameControllor.openGroupList()
+                            #GameControllor.switchToChat()
+                            #GameControllor.openGroupList()
                             # 进入第二个信号 留在原地
                             RelicSignalEnterCoordinate =[1147,723]
                             CombatCommander.ProgenitorSignal(GameControllor,RelicSignalEnterCoordinate,"Group","stay")
@@ -868,45 +873,44 @@ class MissionOperationsOfficer:
                     if self.connectionReadyToWorkFlag:
                         # 进入group
                         GameControllor.openSocial()
-                        GameControllor.switchToChat()
-                        GameControllor.openGroupList()
+                        #GameControllor.switchToChat()
+                        #GameControllor.openGroupList()
                         # 进入第一个信号 留在原地
                         ProgenitorSignalEnterCoordinate = [1201,635]
                         CombatCommander.ProgenitorSignal(GameControllor,ProgenitorSignalEnterCoordinate,"Group","stay")
                         # 进入group
                         GameControllor.openSocial()
-                        GameControllor.switchToChat()
-                        GameControllor.openGroupList()
+                        #GameControllor.switchToChat()
+                        #GameControllor.openGroupList()
                         # 进入第二个信号 留在原地
                         RelicSignalEnterCoordinate =[1147,723]
                         CombatCommander.ProgenitorSignal(GameControllor,RelicSignalEnterCoordinate,"Group","stay")
 def relicBattleTest():
     # 测试Code 
     gameControllor = GameControllor()
-    touch([1512,547])   # 打开物资列表
-    touch([1250,300])   # 打开物资控制面板 
-    touch([1253,494])   # 舰队前去目标位置 绿色的实心箭头
-    sleep(25.0)         # 等待舰队就位 实际上只要发现目标即可 
-    touch([1250,300])   # 打开物资控制面板
-    touch([1166,510])   # 进行回收工作
-    sleep(65.0)         # 等待回收完成 这个过程相当的漫长
+
     if gameControllor.rewardSettlement():   # 准备奖励结算和目的地
         touch([597, 775])
 
 def twoWaveAndResourcesCollectBattelTest():
     gameControllor = GameControllor()
 
-    touch([1512,547])   # 打开物资列表
-    touch([1250,300])   # 打开一个物资的控制面板 
-    touch([1172,511])   # 进行回收工作
-    sleep(60.0)         # 回收等待
-    touch([1250,300])   # 打开第二个物资物资列表
-    touch([1172,511])   # 进行回收工作
-    sleep(60.0)         # 回收等待
-
     if gameControllor.rewardSettlement():   # 准备奖励结算和目的地
         touch([597, 775])
 
+def simpleLoopTest():
+    gameControllor = GameControllor()
+    combatCommander = CombatCommander()
+    loopCount = 0
+    while True:
+        gameControllor.openSocial()                     # 进入group 准备ProgenitorSignal
+        ProgenitorSignalEnterCoordinate = [1201,635]    # 进入第一个信号 留在原地
+        combatCommander.ProgenitorSignal(gameControllor,ProgenitorSignalEnterCoordinate,"Group","stay")
+        gameControllor.openSocial()                     # 进入group 准备RlicSignal
+        RelicSignalEnterCoordinate =[1147,723]          # 进入第二个信号 留在原地
+        combatCommander.RlicSignal(gameControllor,RelicSignalEnterCoordinate,"Group","stay")
+        loopCount += 1
+        log("循环已经发生了"+str(loopCount))
 def fleetAdvancesAccordingToTheLineAndClearSignal():
     # main Function
     # 模块初始化准备

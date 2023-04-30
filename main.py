@@ -8,10 +8,19 @@ from homeWorldScript import *
 
 auto_setup(__file__)
 
+
+
+# Battle Test Function
+#relicBattleTest()
+# twoWaveAndResourcesCollectBattelTest()
+
+# Loop
 # specialOperation()
+simpleLoopTest()
+
 # refreshSignalFromTartgetGalaxy()
 
-# relicBattleTest()
-twoWaveAndResourcesCollectBattelTest()
+
+
 
 
