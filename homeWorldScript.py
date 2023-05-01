@@ -328,10 +328,12 @@ class GameControllor:
 
     def stopAllFlag(self):
         for flag in self.flags:
+            log("游戏检查程序:通知"+str(flag)+"停止行动")
             flag.connectionReadyToWorkFlag = False
 
     def startAllFlag(self):
         for flag in self.flags:
+            log("游戏检查程序:通知"+str(flag)+"可以继续行动")
             flag.connectionReadyToWorkFlag = True
 
     def checkLostConnect(self):
@@ -476,25 +478,6 @@ class FleetCommander:   # 管理所有舰队的Galaxy行动 Galaxy功能模块
             else:
                 log("舰队航线控制:无下一站,已经到达终点站")
                 return False
-
-    def departureWithScan(self,pathNoLoopFlag = False): # 从指定星系开始逐个System扫描 请提前配置刷新线路
-        while True: # 如果连接正常那么继续工作
-            if self.connectionReadyToWorkFlag == True:
-                log("舰队指挥官:舰队信号通畅,准备开始扫描")
-                self.gameControllor.moveToSystemScreen()
-                self.gameControllor.toScan()
-                self.moveToNextStaion(pathNoLoopFlag)
-                log("舰队指挥官:准备进入下个星系!")
-            elif self.connectionReadyToWorkFlag == False:
-                log("舰队指挥官:等待连接状态恢复")
-                while True: # 等待信号重新连接 阻塞舰队行动
-                    sleep(60)   # 主线程进行等待直到舰队被通知可以进行任务
-                    if self.connectionReadyToWorkFlag:
-                        break   # 阻塞结束 准备继续工作
-                self.gameControllor.moveToSystemScreen()
-                self.gameControllor.toScan()
-                self.moveToNextStaion(pathNoLoopFlag)
-                log("舰队指挥官:准备进入下个星系!")
 
 class CombatCommander:  # 信号任务的战斗 突袭战斗 战斗任务控制模块
     def __init__(self):
@@ -680,8 +663,6 @@ class OperationOfficer: # 任务管理官 负责处理办公室任务
                         RelicSignalEnterCoordinate =[1147,723]
                         self.combatCommander.ProgenitorSignal(GameControllor,RelicSignalEnterCoordinate,"Group","stay")
 
-    def refreshSignal(self,one_loop):
-        self.fleetCommander.departureWithScan(one_loop)
     def departureWithAction(self,GameControllor,CombatCommander):
         # main function No returning value 这个似乎不需要做成线程
         # 无限循环走向下一站
@@ -751,6 +732,24 @@ class OperationOfficer: # 任务管理官 负责处理办公室任务
                 else:
                     log("没有找到当前信号类型!")
         return True
+    def galaxyFowardWithScan(self,pathNoLoopFlag = False): # 从指定星系开始逐个System扫描 请提前配置刷新线路
+        while True: # 如果连接正常那么继续工作
+            if self.fleetCommander.connectionReadyToWorkFlag == True:
+                log("舰队指挥官:舰队信号通畅,准备开始扫描")
+                self.gameControllor.moveToSystemScreen()
+                self.gameControllor.toScan()
+                self.fleetCommander.moveToNextStaion(pathNoLoopFlag)
+                log("舰队指挥官:准备进入下个星系!")
+            elif self.fleetCommander.connectionReadyToWorkFlag == False:
+                log("舰队指挥官:等待连接状态恢复")
+                while True: # 等待信号重新连接 阻塞舰队行动
+                    sleep(60)   # 主线程进行等待直到舰队被通知可以进行任务
+                    if self.fleetCommander.connectionReadyToWorkFlag:
+                        break   # 阻塞结束 准备继续工作
+                self.gameControllor.moveToSystemScreen()
+                self.gameControllor.toScan()
+                self.fleetCommander.moveToNextStaion(pathNoLoopFlag)
+                log("舰队指挥官:准备进入下个星系!")
 
 def relicBattle_Test(): # 测试Code inside and beginning of signal mission
     gameControllor = GameControllor() 
@@ -805,7 +804,7 @@ def refreshSignalFromTartgetGalaxy_Test():
     fleetCommander = FleetCommander(gameControllor,travelingGalaxyPlanList)
     combatCommander = CombatCommander()
     operationOfficer = OperationOfficer(gameControllor,fleetCommander,combatCommander)
-    operationOfficer.refreshSignal(True)
+    operationOfficer.galaxyFowardWithScan(True)
 
 def ProgenitorAndRelicSignalLoopOperation_Test():
     gameControllor = GameControllor()
