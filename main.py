@@ -10,15 +10,12 @@ auto_setup(__file__)
 
 
 
-# Battle Test Function
-#relicBattleTest()
-# twoWaveAndResourcesCollectBattelTest()
+#relicBattle_Test()
+#progenitorBattel_Test()
 
-# Loop
-# specialOperation()
-simpleLoopTest()
+#simpleLoop_Test()
+refreshSignalFromTartgetGalaxy_Test()
 
-# refreshSignalFromTartgetGalaxy()
 
 
 

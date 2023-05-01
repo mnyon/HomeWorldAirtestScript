@@ -58,3 +58,5 @@ FleetCommander.departureWithScan(GameControllor,True)
     FleetCommander 刷新信号任务 从线路出发然后回来
 
     一旦掉线会通知FleetCommander停下来 然后一会继续
+
+action方法需要被移除 并且添加到operationOfficer中
