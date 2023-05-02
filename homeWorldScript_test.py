@@ -134,6 +134,18 @@ def refreshSignalFromTartgetGalaxy_Test():
         "./resources/galaxyNameList/ZEMPOALA.png",
         "./resources/galaxyNameList/TEPECOAL.png"
     ]
+    # 第一站就是任务地点
+    ACATLAUHU_SignalLoopPath= [
+        "./resources/galaxyNameList/ACATLAHU.png",
+        "./resources/galaxyNameList/TLACOZAU.png",
+        "./resources/galaxyNameList/XALAPAN.png",
+        "./resources/galaxyNameList/CHUUA.png",
+        "./resources/galaxyNameList/TANOCHETLAN.png",
+        "./resources/galaxyNameList/CUERNAVA.png",
+        "./resources/galaxyNameList/IXTLAN.png",
+        "./resources/galaxyNameList/TECOACUI.png",
+        "./resources/galaxyNameList/TELAPENTE.png"
+    ]
     # specialSignalMissionLoop
     # travelingGalaxyPlanList
     gameControllor = GameControllor()
@@ -143,8 +155,22 @@ def refreshSignalFromTartgetGalaxy_Test():
     operationOfficer.galaxyFowardWithScan(True)
 
 def ProgenitorAndRelicSignalLoopOperation_Test():
+    # 第一站就是任务地点
+    ACATLAUHU_SignalLoopPath= [
+        "./resources/galaxyNameList/ACATLAHU.png",
+        "./resources/galaxyNameList/TLACOZAU.png",
+        "./resources/galaxyNameList/XALAPAN.png",
+        "./resources/galaxyNameList/CHUUA.png",
+        "./resources/galaxyNameList/TANOCHETLAN.png",
+        "./resources/galaxyNameList/CUERNAVA.png",
+        "./resources/galaxyNameList/IXTLAN.png",
+        "./resources/galaxyNameList/TECOACUI.png",
+        "./resources/galaxyNameList/TELAPENTE.png",
+        "./resources/galaxyNameList/ACATLAHU.png"
+    ]
     gameControllor = GameControllor()
-    fleetCommander = FleetCommander(gameControllor,specialSignalMissionLoop)
+    fleetCommander = FleetCommander(gameControllor,ACATLAUHU_SignalLoopPath)
     combatCommander = CombatCommander()
     operationOfficer = OperationOfficer(gameControllor,fleetCommander,combatCommander)
-    operationOfficer.SpecificSignalMissionLoop_Test(True)
+    operationOfficer.operationInit()
+    operationOfficer.withReconnectProgenitorAndRelicGroupSignalLoop()
