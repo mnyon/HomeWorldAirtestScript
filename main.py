@@ -13,9 +13,11 @@ auto_setup(__file__)
 #relicBattle_Test()
 #progenitorBattel_Test()
 
-simpleLoop_Test()
+#simpleLoop_Test()
 #refreshSignalFromTartgetGalaxy_Test()
-#ProgenitorAndRelicSignalLoopOperation_Test()
+ProgenitorAndRelicSignalLoopOperation_Test()
+
+
 
 
 

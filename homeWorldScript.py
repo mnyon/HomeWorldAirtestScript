@@ -8,6 +8,7 @@ class GameControllor:
         self.lostConnectionCheck = False        # no need to init at first 
         self.connectionCheckInterval = 60 * 5   # 按照5分钟的周期检查掉线情况
         self.checkLostConnectThread = None      # 初始化掉线检查线程变量
+        self.disconnectedCount = 0              # 掉线重连的次数
         self.flags = []                         # 需要进行通知断线重连的标志位
 
     def gameControllorInitTest():
@@ -75,7 +76,8 @@ class GameControllor:
     
     def clickSkipButton(self):
         touch([1408, 677])  # click skip
-        sleep(1.0)
+        touch([1408, 677])
+        touch([1408, 677])
         touch([1408, 677])
     
     def openSocial(self):   # 开始条件 应该是主界面 不然点不了右上角的图标
@@ -117,11 +119,11 @@ class GameControllor:
         touch([1514,54])
         log("关闭Social功能!")
     
-    def clickCreditsStayButton():  # 留在原地
+    def clickCreditsStayButton(self):  # 留在原地
         touch([597, 775])   
         touch([597, 775])   # 确保真的点到了避免卡顿
 
-    def clickCreditsGoToStationButton():   # 返回空间站
+    def clickCreditsGoToStationButton(self):   # 返回空间站
         touch([977, 778])
         touch([977, 778])   # 确保真的点到了避免卡顿
 
@@ -142,7 +144,6 @@ class GameControllor:
         touch([1514, 55])   # 关闭通信界面
         touch([472, 482])   # 也关闭GroupUI 
         touch([472, 482])
-        sleep(1.0)
 
     def findSignalStartButtonAndBeginMission(self) -> bool:
         # 选中一个Signal之后检索Start按钮进入
@@ -290,6 +291,7 @@ class GameControllor:
     def checkLostConnect(self):
         first_time = True
         while True:
+            log("UI控制程序:掉线发现的次数:"+str(self.disconnectedCount)+"次")
             if first_time:  # 第一次执行的时候并不进行检查 放行舰队行动
                 log("游戏检查程序:第一次连接检查默认连接正常")
                 self.startAllFlag()
@@ -303,6 +305,7 @@ class GameControllor:
                 sleep(self.connectionCheckInterval) # 继续周期性检查掉线情况 
             else:    # 准备重新连接
                 log("游戏检查程序:检查到掉线情况发生,准备重新连接")
+                self.disconnectedCount += 1
                 self.stopAllFlag()
                 touch([800,720])    # click restart button
                 sleep(60.0)         # 加载时间缓冲
@@ -465,11 +468,11 @@ class CombatCommander:  # 信号任务的战斗 突袭战斗 战斗任务控制�
         log("UI控制程序:点击Signal加载Skip")
         gameControllor.clickSkipButton()
         log("战斗指挥官:准备进入战场 开始Progenitor任务")
-        sleep(30.0) # 准备加载到战场
+        sleep(38.0) # 准备加载到战场
         if UISource == "Group":         # UI处理
-            log("关闭无关UI")
+            log("UI控制程序:关闭无关UI")
             gameControllor.closeCommunicationLsitUI()   # 关闭通信频道的无关UI 如果是Group进来的话
-        log("开始战场指挥")
+        log("战斗指挥官:开始战场指挥")
         touch([1512,547])   # 打开物资列表
         touch([1250,300])   # 打开第一个物资的控制面板 
         touch([1336,511])   # 舰队协同保护矿机 前进Move
@@ -490,10 +493,11 @@ class CombatCommander:  # 信号任务的战斗 突袭战斗 战斗任务控制�
         if gameControllor.rewardSettlement():   # 准备奖励结算和目的地
             if destination == "station":
                 # 返回空间站
-                gameControllor.clickCreditsStayButton()
+                gameControllor.clickCreditsGoToStationButton()
             elif destination == "stay":
                 # 留在原地
-                gameControllor.clickCreditsGoToStationButton()
+                gameControllor.clickCreditsStayButton()
+                
 
     def RlicSignal(self,gameControllor,signalJumpUICoordination,UISource:str,destination:str):
         # 处理Relic信号任务
@@ -501,7 +505,8 @@ class CombatCommander:  # 信号任务的战斗 突袭战斗 战斗任务控制�
         
         touch(signalJumpUICoordination)     # 进行跃迁,开始战场加载
         gameControllor.clickSkipButton()    # 跳过加载动画
-        sleep(30.0)                         # 等待完全加载
+        log("战斗指挥官:准备进入战场 开始Relic任务")
+        sleep(38.0)                         # 等待完全加载
         # 如果是Group进入战场则进行UI处理
         if UISource == "Group":
             log("关闭无关UI")
@@ -518,9 +523,9 @@ class CombatCommander:  # 信号任务的战斗 突袭战斗 战斗任务控制�
 
         if gameControllor.rewardSettlement():   # 准备奖励结算和目的地
             if destination == "station":    # 返回空间站
-                gameControllor.clickCreditsStayButton()
-            elif destination == "stay":     # 留在原地
                 gameControllor.clickCreditsGoToStationButton()
+            elif destination == "stay":     # 留在原地
+                gameControllor.clickCreditsStayButton()
 
 class OperationOfficer: # 任务管理官 负责处理办公室任务
     def __init__(self,GameControllor_instance,FleetCommander_instance,CombatCommander_instance):
@@ -561,7 +566,7 @@ class OperationOfficer: # 任务管理官 负责处理办公室任务
                 self.galaxyFowardWithScan(True) # 刷新信号任务 从线路出发然后回来
                 self.gameControllor.moveToSystemScreen()
                 log("任务官:开始反复扫描")
-                self.gameControllor.multipleScan(6) # 进行充足的扫描来防止没有刷新
+                self.gameControllor.multipleScan(20) # 进行充足的扫描来防止没有刷新
                 log("任务官:开始记录信号")
                 self.gameControllor.recordSignalMission()
                 while True: # 开始进行循环任务

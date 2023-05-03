@@ -98,7 +98,7 @@ def fleetAdvancesAccordingToTheLineAndClearSignal_Test():
 
 def refreshSignalFromTartgetGalaxy_Test():
     # 请按照路线顺序安排 用来当作循环航路的路线设计 可以用作刷新信号
-    travelingGalaxyPlanList = [
+    DEVADAASItravelingGalaxyPlanList = [
         "./resources/galaxyNameList/DEVADAASI.png", 
         "./resources/galaxyNameList/NIIREA PAAS.png", 
         "./resources/galaxyNameList/KALUARI.png",
@@ -149,9 +149,10 @@ def refreshSignalFromTartgetGalaxy_Test():
     # specialSignalMissionLoop
     # travelingGalaxyPlanList
     gameControllor = GameControllor()
-    fleetCommander = FleetCommander(gameControllor,travelingGalaxyPlanList)
+    fleetCommander = FleetCommander(gameControllor,DEVADAASItravelingGalaxyPlanList)
     combatCommander = CombatCommander()
     operationOfficer = OperationOfficer(gameControllor,fleetCommander,combatCommander)
+    operationOfficer.operationInit()
     operationOfficer.galaxyFowardWithScan(True)
 
 def ProgenitorAndRelicSignalLoopOperation_Test():
