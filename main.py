@@ -9,13 +9,14 @@ from homeWorldScript_test import *
 auto_setup(__file__)
 
 
-
+autoSkill_Test()
 #relicBattle_Test()
 #progenitorBattel_Test()
 
 #simpleLoop_Test()
 #refreshSignalFromTartgetGalaxy_Test()
-ProgenitorAndRelicSignalLoopOperation_Test()
+#ProgenitorAndRelicSignalLoopOperation_Test()
+
 
 
 

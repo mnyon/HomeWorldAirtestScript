@@ -435,30 +435,45 @@ class FleetCommander:   # 管理所有舰队的Galaxy行动 Galaxy功能模块
 
 class CombatCommander:  # 信号任务的战斗 突袭战斗 战斗任务控制模块
     def __init__(self):
-        self.autoSkillInterval = 15     # 自动释放技能间隔
-        self.autoTacticsFireFlag = False# 自动释放母舰战术技能
-
+        self.autoSkillInterval = 15                      # 自动释放技能间隔
+        self.autoTacticsFireFlag = False                 # 自动释放母舰战术技能
+        self.autoTacticsFireEvent = threading.Event()    # 创建一个Event对象
     def combatCommanderInitTest():
         log("CombatCommander init success")
 
     def tacticsFire(self,slotSequence: int) -> None: # 母舰武器系统战术技能开火栏位 slotSequence技能槽序数
         positions = {
-            1: [(82, 364)],
-            2: [(83, 451)],
-            3: [(88, 536)],
-            4: [(85, 622)]
+            1: [82, 364],
+            2: [83, 451],
+            3: [88, 536],
+            4: [85, 622]
         }
         if slotSequence in positions:
             log("战斗指挥官:使用第"+str(slotSequence)+"战术技能")
             touch(positions[slotSequence])
-    def autoTacticsFire_start(self):
-        self.autoTacticsFireFlag = True
-        while self.running:
+    def _autoTacticsFire_loop(self, stop_event):
+        while not stop_event.is_set():  # 判断是否需要停止
             for slotIndex in range(4):
-                self(tacticsFire,slotIndex) # 全部战术技能发射
-            sleep(self.autoSkillInterval)
+                self.tacticsFire(slotIndex)  # 调用tacticsFire方法
+            stop_event.wait(self.autoSkillInterval)  # 等待指定的时间
+
+    def autoTacticsFire_start(self, skillInterval=None):
+        if skillInterval is not None:
+            self.autoSkillInterval = skillInterval
+
+        self.autoTacticsFireFlag = True
+        self.autoTacticsFireEvent.clear()  # 初始化Event对象的状态
+        # 创建一个新的线程并启动
+        self.autoTacticsFireThread = threading.Thread(
+            target=self._autoTacticsFire_loop, args=(self.autoTacticsFireEvent,))
+        self.autoTacticsFireThread.start()
+
     def autoTacticsFire_stop(self):
         self.autoTacticsFireFlag = False
+        self.autoTacticsFireEvent.set()  # 设置Event对象的状态，通知线程停止
+        # 等待线程停止
+        if self.autoTacticsFireThread is not None:
+            self.autoTacticsFireThread.join()
 
     def getSignalMissionType(self): # 获取信号类型并你准备下一个任务类型 返回Template
         # 从Type array中获取一个

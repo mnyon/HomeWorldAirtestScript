@@ -1,8 +1,14 @@
 
 from homeWorldScript import *
 
+def autoSkill_Test():
+    combatCommander = CombatCommander()
+    log("战斗指挥官:开始战术技能自动释放")
+    combatCommander.autoTacticsFire_start(skillInterval=6)   # 开始自动释放战术技能，每 10 秒执行一次
+    combatCommander.autoTacticsFire_stop()      
 def relicBattle_Test(): # 测试Code inside and beginning of signal mission
     gameControllor = GameControllor() 
+    combatCommander = CombatCommander()
     log("战斗指挥官:开始战场指挥")
     touch([1512,547])   # 打开物资列表
     touch([1250,300])   # 打开物资控制面板 
@@ -10,14 +16,17 @@ def relicBattle_Test(): # 测试Code inside and beginning of signal mission
     sleep(25.0)         # 等待舰队就位 实际上只要发现目标即可 
     touch([1250,300])   # 打开物资控制面板
     touch([1166,510])   # 进行回收工作
+    combatCommander.autoTacticsFire_start(skillInterval=6)   # 开始自动释放战术技能，每 10 秒执行一次
     sleep(62.0)         # 等待回收完成 这个过程相当的漫长
-    log("回收预计完成")
+    log("战斗指挥官:回收预计完成")
+    combatCommander.autoTacticsFire_stop()                   # 停止自动释放战术技能
 
     if gameControllor.rewardSettlement():   # 准备奖励结算和目的地
         touch([597, 775])
 
 def progenitorBattel_Test(): # 测试Code inside and beginning of signal mission
     gameControllor = GameControllor()
+    combatCommander = CombatCommander()
     log("战斗指挥官:开始战场指挥")
     touch([1512,547])   # 打开物资列表
     touch([1250,300])   # 打开第一个物资的控制面板 
@@ -32,8 +41,12 @@ def progenitorBattel_Test(): # 测试Code inside and beginning of signal mission
     sleep(60.0)         # 前进等待
     touch([1250,300])   # 打开第二个物资的控制面板
     touch([1169,508])   # 开始回收工作
+
+    combatCommander.autoTacticsFire_start(skillInterval=6)   # 开始自动释放战术技能，每 10 秒执行一次
     sleep(13.0)         # 正在进行回收
     sleep(12.0)         # 等待敌人被歼灭
+    combatCommander.autoTacticsFire_stop()                   # 停止自动释放战术技能
+
     if gameControllor.rewardSettlement():   # 准备奖励结算和目的地
         touch([597, 775])
 
