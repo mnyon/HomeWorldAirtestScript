@@ -79,7 +79,10 @@ class GameControllor:
         touch([1408, 677])
         touch([1408, 677])
         touch([1408, 677])
-    
+        sleep(3.0)          # 保证能完全的跳过加载过程 这一点加载时间可能会影响整个循环
+        touch([1408, 677])
+        touch([1408, 677])
+
     def openSocial(self):   # 开始条件 应该是主界面 不然点不了右上角的图标
         touch([1521, 72])   # open channel list
         sleep(1.0)
@@ -289,7 +292,7 @@ class GameControllor:
             flag.connectionReadyToWorkFlag = True
 
     def checkLostConnect(self):
-        first_time = True
+        first_time = True # 检查是否是第一次执行,在常规情况下第一次是不用进行掉线检查的
         while True:
             log("UI控制程序:掉线发现的次数:"+str(self.disconnectedCount)+"次")
             if first_time:  # 第一次执行的时候并不进行检查 放行舰队行动
@@ -449,7 +452,7 @@ class CombatCommander:  # 信号任务的战斗 突袭战斗 战斗任务控制�
             4: [85, 622]
         }
         if slotSequence in positions:
-            log("战斗指挥官:使用第"+str(slotSequence)+"战术技能")
+            # log("战斗指挥官:使用第"+str(slotSequence)+"战术技能")
             touch(positions[slotSequence])
     def _autoTacticsFire_loop(self, stop_event):
         while not stop_event.is_set():  # 判断是否需要停止
@@ -502,9 +505,10 @@ class CombatCommander:  # 信号任务的战斗 突袭战斗 战斗任务控制�
         sleep(60.0)         # 前进等待
         touch([1250,300])   # 打开第二个物资的控制面板
         touch([1169,508])   # 开始回收工作
+        self.autoTacticsFire_start(skillInterval=6)   # 开始自动释放战术技能，每 10 秒执行一次
         sleep(13.0)         # 正在进行回收
         sleep(12.0)         # 等待敌人被歼灭
-
+        self.autoTacticsFire_stop()      # 自动释放战术技能停止
         if gameControllor.rewardSettlement():   # 准备奖励结算和目的地
             if destination == "station":
                 # 返回空间站
@@ -512,7 +516,6 @@ class CombatCommander:  # 信号任务的战斗 突袭战斗 战斗任务控制�
             elif destination == "stay":
                 # 留在原地
                 gameControllor.clickCreditsStayButton()
-                
 
     def RlicSignal(self,gameControllor,signalJumpUICoordination,UISource:str,destination:str):
         # 处理Relic信号任务
@@ -533,15 +536,17 @@ class CombatCommander:  # 信号任务的战斗 突袭战斗 战斗任务控制�
         sleep(25.0)         # 等待舰队就位 实际上只要发现目标即可 
         touch([1250,300])   # 打开物资控制面板
         touch([1166,510])   # 进行回收工作
+        log("战斗指挥官:开始战术技能自动释放")
+        self.autoTacticsFire_start(skillInterval=6)   # 开始自动释放战术技能，每 10 秒执行一次
         sleep(62.0)         # 等待回收完成 这个过程相当的漫长
-        log("回收预计完成")
-
+        log("任务官:回收预计完成")
+        self.autoTacticsFire_stop()      # 自动释放战术技能停止
         if gameControllor.rewardSettlement():   # 准备奖励结算和目的地
             if destination == "station":    # 返回空间站
                 gameControllor.clickCreditsGoToStationButton()
             elif destination == "stay":     # 留在原地
                 gameControllor.clickCreditsStayButton()
-
+        
 class OperationOfficer: # 任务管理官 负责处理办公室任务
     def __init__(self,GameControllor_instance,FleetCommander_instance,CombatCommander_instance):
         self.test = True
@@ -581,7 +586,7 @@ class OperationOfficer: # 任务管理官 负责处理办公室任务
                 self.galaxyFowardWithScan(True) # 刷新信号任务 从线路出发然后回来
                 self.gameControllor.moveToSystemScreen()
                 log("任务官:开始反复扫描")
-                self.gameControllor.multipleScan(20) # 进行充足的扫描来防止没有刷新
+                self.gameControllor.multipleScan(6) # 进行充足的扫描来防止没有刷新
                 log("任务官:开始记录信号")
                 self.gameControllor.recordSignalMission()
                 while True: # 开始进行循环任务
@@ -593,18 +598,25 @@ class OperationOfficer: # 任务管理官 负责处理办公室任务
             else:
                 log("任务官:失去连接,正在重新连接")
                 while True:     # 等待信号重新连接 阻塞舰队行动
-                    sleep(60)   # 主线程进行等待 直到 舰队被通知可以进行任务
+                    sleep(5.0)   # 主线程进行等待 直到 舰队被通知可以进行任务
                     if self.connectionReadyToWorkFlag:
                         break   # 结束阻塞的循环 准备继续触发
                 log("任务官:阻塞结束,准备继续任务")
-                self.fleetCommander.departureWithScan(GameControllor,True)   
-                log("任务官::准备扫描信号")
+                log("任务官:开始创建频道和加入Group")
+                self.gameControllor.joinChannelAndGroup()
+                log("任务官:连接状态正常,准备按照预定路线刷新Signal")
+                self.galaxyFowardWithScan(True) # 刷新信号任务 从线路出发然后回来
                 self.gameControllor.moveToSystemScreen()
-                self.gameControllor.multipleScan(5) # 进行充足的扫描来防止没有刷新
+                log("任务官:开始反复扫描")
+                self.gameControllor.multipleScan(20) # 进行充足的扫描来防止没有刷新
+                log("任务官:开始记录信号")
                 self.gameControllor.recordSignalMission()
-                while True:
+                while True: # 开始进行循环任务
                     if self.connectionReadyToWorkFlag:
+                        log("任务官:开始信号循环任务")
                         self.simpleProgenitorAndRelicGroupSignalLoop()
+                    else:
+                        break # 结束内层循环
 
     def cleanLocalSignals(self,GameControllor,CombatCommander):
         # 清理本星系的信号任务 是完全的打完还是仅仅是有限的次数?
