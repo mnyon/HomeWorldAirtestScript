@@ -78,8 +78,9 @@ class GameControllor:
         touch([1408, 677])  # click skip
         touch([1408, 677])
         touch([1408, 677])
+        sleep(1.0) 
         touch([1408, 677])
-        sleep(3.0)          # 保证能完全的跳过加载过程 这一点加载时间可能会影响整个循环
+        sleep(2.0)          # 保证能完全的跳过加载过程 这一点加载时间可能会影响整个循环
         touch([1408, 677])
         touch([1408, 677])
 
@@ -481,12 +482,13 @@ class CombatCommander:  # 信号任务的战斗 突袭战斗 战斗任务控制�
     def getSignalMissionType(self): # 获取信号类型并你准备下一个任务类型 返回Template
         # 从Type array中获取一个
         return True
-    def ProgenitorSignal(self,gameControllor,signalJumpUICoordination,UISource:str,destination:str):
+    def jumpToSignal(self, gameControllor,signalJumpUICoordination):
         touch(signalJumpUICoordination)
-        log("UI控制程序:点击Signal加载Skip")
         gameControllor.clickSkipButton()
+        sleep(38.0)
+    def ProgenitorSignal(self,gameControllor,signalJumpUICoordination,UISource:str,destination:str):
         log("战斗指挥官:准备进入战场 开始Progenitor任务")
-        sleep(38.0) # 准备加载到战场
+        self.jumpToSignal(gameControllor,signalJumpUICoordination)
         if UISource == "Group":         # UI处理
             log("UI控制程序:关闭无关UI")
             gameControllor.closeCommunicationLsitUI()   # 关闭通信频道的无关UI 如果是Group进来的话
@@ -520,11 +522,8 @@ class CombatCommander:  # 信号任务的战斗 突袭战斗 战斗任务控制�
     def RlicSignal(self,gameControllor,signalJumpUICoordination,UISource:str,destination:str):
         # 处理Relic信号任务
         # 这类任务的特征是 1.前往目标地带 2.回收资源 该任务不需要消灭敌人
-        
-        touch(signalJumpUICoordination)     # 进行跃迁,开始战场加载
-        gameControllor.clickSkipButton()    # 跳过加载动画
         log("战斗指挥官:准备进入战场 开始Relic任务")
-        sleep(38.0)                         # 等待完全加载
+        self.jumpToSignal(gameControllor,signalJumpUICoordination)
         # 如果是Group进入战场则进行UI处理
         if UISource == "Group":
             log("关闭无关UI")
@@ -554,6 +553,7 @@ class OperationOfficer: # 任务管理官 负责处理办公室任务
         self.fleetCommander = FleetCommander_instance
         self.combatCommander = CombatCommander_instance
         self.connectionReadyToWorkFlag = False  # 重置队伍信号内容 当掉线发生时 循环暂停 并且重置
+        self.first_execution = True             # 第一次执行的信号
 
     def initClassTest(self):
         self.gameControllor.gameControllorInitTest()
@@ -576,47 +576,39 @@ class OperationOfficer: # 任务管理官 负责处理办公室任务
             loopCount += 1
             log("循环已经发生了"+str(loopCount))
 
-    def withReconnectProgenitorAndRelicGroupSignalLoop(self):    # 指挥官没有准备好信号刷新机制需要自动刷新
+    def withReconnectProgenitorAndRelicGroupSignalLoop(self):
+        # 这个函数执行的第一次应该确定信号是可以刷新出来的状态 会直接开始刷新准备
         log("任务官:开始创建频道和加入Group")
-        self.gameControllor.joinChannelAndGroup()    # 准备创建频道并进入小队
+        self.gameControllor.joinChannelAndGroup()  # 准备创建频道并进入小队
         while True:
             log("任务官:开始连接状态,准备执行循环Signal任务")
             if self.connectionReadyToWorkFlag:  # 隐式被GameControllor控制的变量
-                log("任务官:连接状态正常,准备按照预定路线刷新Signal")
-                self.galaxyFowardWithScan(True) # 刷新信号任务 从线路出发然后回来
-                self.gameControllor.moveToSystemScreen()
-                log("任务官:开始反复扫描")
-                self.gameControllor.multipleScan(6) # 进行充足的扫描来防止没有刷新
-                log("任务官:开始记录信号")
-                self.gameControllor.recordSignalMission()
-                while True: # 开始进行循环任务
-                    if self.connectionReadyToWorkFlag:
-                        log("任务官:开始信号循环任务")
-                        self.simpleProgenitorAndRelicGroupSignalLoop()
-                    else:
-                        break # 结束内层循环
+                self.executeSignalLoop()
             else:
-                log("任务官:失去连接,正在重新连接")
-                while True:     # 等待信号重新连接 阻塞舰队行动
-                    sleep(5.0)   # 主线程进行等待 直到 舰队被通知可以进行任务
-                    if self.connectionReadyToWorkFlag:
-                        break   # 结束阻塞的循环 准备继续触发
-                log("任务官:阻塞结束,准备继续任务")
-                log("任务官:开始创建频道和加入Group")
-                self.gameControllor.joinChannelAndGroup()
-                log("任务官:连接状态正常,准备按照预定路线刷新Signal")
-                self.galaxyFowardWithScan(True) # 刷新信号任务 从线路出发然后回来
-                self.gameControllor.moveToSystemScreen()
-                log("任务官:开始反复扫描")
-                self.gameControllor.multipleScan(20) # 进行充足的扫描来防止没有刷新
-                log("任务官:开始记录信号")
-                self.gameControllor.recordSignalMission()
-                while True: # 开始进行循环任务
-                    if self.connectionReadyToWorkFlag:
-                        log("任务官:开始信号循环任务")
-                        self.simpleProgenitorAndRelicGroupSignalLoop()
-                    else:
-                        break # 结束内层循环
+                self.reconnectAndContinue()
+
+    def executeSignalLoop(self):
+        log("任务官:连接状态正常,准备按照预定路线刷新Signal")
+        if self.first_execution:
+            self.first_execution = False
+        else:
+            self.galaxyFowardWithScan(True)
+        self.gameControllor.moveToSystemScreen()
+        log("任务官:开始反复扫描")
+        self.gameControllor.multipleScan(6)
+        log("任务官:开始记录信号")
+        self.gameControllor.recordSignalMission()
+        while self.connectionReadyToWorkFlag:
+            log("任务官:开始信号循环任务")
+            self.simpleProgenitorAndRelicGroupSignalLoop()
+
+    def reconnectAndContinue(self):
+        log("任务官:失去连接,正在重新连接")
+        while not self.connectionReadyToWorkFlag:
+            sleep(5.0)
+        log("任务官:阻塞结束,准备继续任务")
+        log("任务官:开始创建频道和加入Group")
+        self.gameControllor.joinChannelAnd
 
     def cleanLocalSignals(self,GameControllor,CombatCommander):
         # 清理本星系的信号任务 是完全的打完还是仅仅是有限的次数?
